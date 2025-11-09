@@ -86,8 +86,3 @@ erDiagram
   Bewegungsdaten (Assignment)
 - Vermeidung von Redundanz durch Fremdschlüssel-Beziehungen
 
-## Zukünftige Erweiterungen (optional)
-
-- Maintenance-Historie (Reparaturen, Wartungen)
-- Kosten pro Device
-- Bilder/Dokumente als Attachments
