@@ -1,5 +1,5 @@
 -- 010_inventory_schema.sql
--- Inventar-Schema für Department, Person, DeviceType, Location, Device, Assignment
+-- Inventar-Schema für Person, DeviceType, Location, Device, Assignment
 
 -- DeviceType: Kategorisierung der Geräte
 create table if not exists device_type (
@@ -95,7 +95,7 @@ join device_type dt on dt.code = d.device_type_code
 join location l on l.code = d.location_code
 on conflict (inventory_no) do nothing;
 
--- Seed-Daten für Assignment (einige aktive Zuweisungen)
+-- Seed-Daten für Assignment
 insert into assignment (device_id, person_id, assigned_from, assigned_to, notes)
 select dev.device_id, p.person_id, a.assigned_from, a.assigned_to::timestamp, a.notes
 from (values
