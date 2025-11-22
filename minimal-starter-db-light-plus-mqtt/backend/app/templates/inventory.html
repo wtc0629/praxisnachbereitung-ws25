@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <style>
+      :root { font-family: -apple-system, system-ui, Segoe UI, Roboto, Ubuntu, Cantarell, Helvetica, Arial; }
+      body { margin: 0; padding: 2rem; background: #f8f9fa; }
+      .container { max-width: 1200px; margin: 0 auto; }
+      .card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.08); margin-bottom: 1.5rem; }
+      h1 { margin-top: 0; color: #1a202c; }
+      h2 { margin-top: 0; font-size: 1.25rem; color: #2d3748; border-bottom: 2px solid #e5e7eb; padding-bottom: .5rem; }
+      .links { margin-bottom: 1rem; }
+      .links a { display: inline-block; margin-right: 1rem; padding: .5rem 1rem; background: #f0f4ff; color: #3b82f6; border-radius: 8px; text-decoration: none; font-size: .9rem; }
+      .links a:hover { background: #dbeafe; }
+      table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: .9rem; }
+      th { text-align: left; padding: .75rem; background: #f8f9fa; border-bottom: 2px solid #e5e7eb; font-weight: 600; color: #4a5568; }
+      td { padding: .75rem; border-bottom: 1px solid #e5e7eb; }
+      tr:hover { background: #f8f9fa; }
+      .badge { display: inline-block; padding: .25rem .75rem; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+      .badge-success { background: #d1fae5; color: #065f46; }
+      .badge-warning { background: #fef3c7; color: #92400e; }
+      .badge-danger { background: #fee2e2; color: #991b1b; }
+      .badge-info { background: #dbeafe; color: #1e40af; }
+      .badge-secondary { background: #e5e7eb; color: #374151; }
+      form { margin-top: 1rem; }
+      .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+      label { display: block; margin-bottom: .25rem; font-size: .875rem; font-weight: 500; color: #4a5568; }
+      input, select, textarea { width: 100%; padding: .5rem .75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .9rem; }
+      input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+      button { padding: .6rem 1.25rem; border-radius: 8px; border: none; background: #3b82f6; color: white; cursor: pointer; font-weight: 600; font-size: .9rem; }
+      button:hover { background: #2563eb; }
+      button.secondary { background: #6b7280; }
+      button.secondary:hover { background: #4b5563; }
+      .btn-return { padding: .35rem .75rem; font-size: .8rem; background: #10b981; }
+      .btn-return:hover { background: #059669; }
+      .success-msg { background: #d1fae5; color: #065f46; padding: .75rem; border-radius: 8px; margin-bottom: 1rem; }
+      .error-msg { background: #fee2e2; color: #991b1b; padding: .75rem; border-radius: 8px; margin-bottom: 1rem; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>📦 Inventar-Verwaltung</h1>
+        <div class="links">
+          <a href="/">← Startseite</a>
+          <a href="/health">Health</a>
+          <a href="/docs">API Docs</a>
+        </div>
+      </div>
+
+      <!-- Devices Section -->
+      <div class="card">
+        <h2>Geräte</h2>
+        <div id="device-msg" class="hidden"></div>
+        <table id="devices-table">
+          <thead>
+            <tr>
+              <th>Inventarnummer</th>
+              <th>Typ</th>
+              <th>Standort</th>
+              <th>Status</th>
+              <th>Verfügbarkeit</th>
+              <th>Notizen</th>
+            </tr>
+          </thead>
+          <tbody id="devices-tbody">
+            <tr><td colspan="6">Lade Geräte...</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 2rem;">Neues Gerät hinzufügen</h3>
+        <form id="add-device-form">
+          <div class="form-row">
+            <div>
+              <label>Inventarnummer*</label>
+              <input id="device-inventory-no" required placeholder="INV-2025-009" />
+            </div>
+            <div>
+              <label>Gerätetyp*</label>
+              <select id="device-type-id" required>
+                <option value="">Bitte wählen...</option>
+              </select>
+            </div>
+            <div>
+              <label>Standort*</label>
+              <select id="device-location-id" required>
+                <option value="">Bitte wählen...</option>
+              </select>
+            </div>
+            <div>
+              <label>Status</label>
+              <select id="device-status">
+                <option value="in_stock">Auf Lager</option>
+                <option value="in_use">In Benutzung</option>
+                <option value="repair">Reparatur</option>
+                <option value="retired">Ausgemustert</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Notizen</label>
+            <input id="device-notes" placeholder="Optional..." />
+          </div>
+          <button type="submit">Gerät hinzufügen</button>
+        </form>
+      </div>
+
+      <!-- Active Assignments Section -->
+      <div class="card">
+        <h2>Aktive Ausleihen</h2>
+        <div id="assignment-msg" class="hidden"></div>
+        <table id="assignments-table">
+          <thead>
+            <tr>
+              <th>Inventarnummer</th>
+              <th>Gerätetyp</th>
+              <th>Person</th>
+              <th>Ausgegeben am</th>
+              <th>Notizen</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="assignments-tbody">
+            <tr><td colspan="6">Lade Ausleihen...</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 2rem;">Gerät ausgeben</h3>
+        <form id="add-assignment-form">
+          <div class="form-row">
+            <div>
+              <label>Gerät*</label>
+              <select id="assignment-device-id" required>
+                <option value="">Bitte wählen...</option>
+              </select>
+            </div>
+            <div>
+              <label>Person*</label>
+              <select id="assignment-person-id" required>
+                <option value="">Bitte wählen...</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Notizen</label>
+            <input id="assignment-notes" placeholder="Optional..." />
+          </div>
+          <button type="submit">Gerät ausgeben</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      let devices = [];
+      let assignments = [];
+      let deviceTypes = [];
+      let locations = [];
+      let persons = [];
+
+      async function loadAll() {
+        await Promise.all([
+          loadDevices(),
+          loadAssignments(),
+          loadDeviceTypes(),
+          loadLocations(),
+          loadPersons()
+        ]);
+        populateDeviceForm();
+        populateAssignmentForm();
+      }
+
+      async function loadDevices() {
+        const res = await fetch('/devices');
+        devices = await res.json();
+        renderDevices();
+      }
+
+      async function loadAssignments() {
+        const res = await fetch('/assignments/active');
+        assignments = await res.json();
+        renderAssignments();
+      }
+
+      async function loadDeviceTypes() {
+        const res = await fetch('/device-types');
+        deviceTypes = await res.json();
+      }
+
+      async function loadLocations() {
+        const res = await fetch('/locations');
+        locations = await res.json();
+      }
+
+      async function loadPersons() {
+        const res = await fetch('/persons');
+        persons = await res.json();
+      }
+
+      function renderDevices() {
+        const tbody = document.getElementById('devices-tbody');
+        if (devices.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">Keine Geräte vorhanden</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = devices.map(d => `
+          <tr>
+            <td><strong>${d.inventory_no}</strong></td>
+            <td>${d.device_type_name}</td>
+            <td>${d.location_name}</td>
+            <td><span class="badge ${getStatusBadge(d.status)}">${getStatusText(d.status)}</span></td>
+            <td><span class="badge ${d.availability_status === 'frei' ? 'badge-success' : 'badge-warning'}">${d.availability_status}</span></td>
+            <td>${d.notes || '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      function renderAssignments() {
+        const tbody = document.getElementById('assignments-tbody');
+        if (assignments.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6">Keine aktiven Ausleihen</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = assignments.map(a => `
+          <tr>
+            <td><strong>${a.inventory_no}</strong></td>
+            <td>${a.device_type_name}</td>
+            <td>${a.person_name} (${a.personnel_no})</td>
+            <td>${new Date(a.assigned_from).toLocaleString('de-DE')}</td>
+            <td>${a.notes || '-'}</td>
+            <td><button class="btn-return" onclick="returnDevice(${a.assignment_id})">Zurückgeben</button></td>
+          </tr>
+        `).join('');
+      }
+
+      function populateDeviceForm() {
+        const typeSelect = document.getElementById('device-type-id');
+        typeSelect.innerHTML = '<option value="">Bitte wählen...</option>' +
+          deviceTypes.map(dt => `<option value="${dt.device_type_id}">${dt.name}</option>`).join('');
+
+        const locSelect = document.getElementById('device-location-id');
+        locSelect.innerHTML = '<option value="">Bitte wählen...</option>' +
+          locations.map(l => `<option value="${l.location_id}">${l.name}</option>`).join('');
+      }
+
+      function populateAssignmentForm() {
+        const availableDevices = devices.filter(d => d.availability_status === 'frei' && d.status === 'in_stock');
+        const deviceSelect = document.getElementById('assignment-device-id');
+        deviceSelect.innerHTML = '<option value="">Bitte wählen...</option>' +
+          availableDevices.map(d => `<option value="${d.device_id}">${d.inventory_no} - ${d.device_type_name}</option>`).join('');
+
+        const personSelect = document.getElementById('assignment-person-id');
+        personSelect.innerHTML = '<option value="">Bitte wählen...</option>' +
+          persons.map(p => `<option value="${p.person_id}">${p.name} (${p.personnel_no})</option>`).join('');
+      }
+
+      function getStatusBadge(status) {
+        const badges = {
+          'in_stock': 'badge-success',
+          'in_use': 'badge-info',
+          'repair': 'badge-warning',
+          'retired': 'badge-secondary'
+        };
+        return badges[status] || 'badge-secondary';
+      }
+
+      function getStatusText(status) {
+        const texts = {
+          'in_stock': 'Auf Lager',
+          'in_use': 'In Benutzung',
+          'repair': 'Reparatur',
+          'retired': 'Ausgemustert'
+        };
+        return texts[status] || status;
+      }
+
+      function showMessage(elementId, message, isError = false) {
+        const el = document.getElementById(elementId);
+        el.className = isError ? 'error-msg' : 'success-msg';
+        el.textContent = message;
+        el.classList.remove('hidden');
+        setTimeout(() => el.classList.add('hidden'), 5000);
+      }
+
+      document.getElementById('add-device-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+          inventory_no: document.getElementById('device-inventory-no').value,
+          device_type_id: parseInt(document.getElementById('device-type-id').value),
+          location_id: parseInt(document.getElementById('device-location-id').value),
+          status: document.getElementById('device-status').value,
+          notes: document.getElementById('device-notes').value || null
+        };
+
+        try {
+          const res = await fetch('/devices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          if (res.ok) {
+            showMessage('device-msg', 'Gerät erfolgreich hinzugefügt!');
+            e.target.reset();
+            await loadDevices();
+            populateAssignmentForm();
+          } else {
+            const error = await res.json();
+            showMessage('device-msg', error.detail || 'Fehler beim Hinzufügen', true);
+          }
+        } catch (err) {
+          showMessage('device-msg', 'Netzwerkfehler: ' + err.message, true);
+        }
+      });
+
+      document.getElementById('add-assignment-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+          device_id: parseInt(document.getElementById('assignment-device-id').value),
+          person_id: parseInt(document.getElementById('assignment-person-id').value),
+          notes: document.getElementById('assignment-notes').value || null
+        };
+
+        try {
+          const res = await fetch('/assignments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+
+          if (res.ok) {
+            showMessage('assignment-msg', 'Gerät erfolgreich ausgegeben!');
+            e.target.reset();
+            await Promise.all([loadDevices(), loadAssignments()]);
+            populateAssignmentForm();
+          } else {
+            const error = await res.json();
+            showMessage('assignment-msg', error.detail || 'Fehler beim Ausgeben', true);
+          }
+        } catch (err) {
+          showMessage('assignment-msg', 'Netzwerkfehler: ' + err.message, true);
+        }
+      });
+
+      async function returnDevice(assignmentId) {
+        if (!confirm('Gerät wirklich zurückgeben?')) return;
+
+        try {
+          const res = await fetch(`/assignments/${assignmentId}/return`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+          });
+
+          if (res.ok) {
+            showMessage('assignment-msg', 'Gerät erfolgreich zurückgegeben!');
+            await Promise.all([loadDevices(), loadAssignments()]);
+            populateAssignmentForm();
+          } else {
+            const error = await res.json();
+            showMessage('assignment-msg', error.detail || 'Fehler beim Zurückgeben', true);
+          }
+        } catch (err) {
+          showMessage('assignment-msg', 'Netzwerkfehler: ' + err.message, true);
+        }
+      }
+
+      // Load data on page load
+      loadAll();
+    </script>
+  </body>
+</html>
