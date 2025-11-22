@@ -50,6 +50,7 @@ class LocationCreate(BaseModel):
 class Device(BaseModel):
     device_id: int
     inventory_no: str
+    serial_number: str
     device_type_id: int
     location_id: int
     status: str
@@ -60,6 +61,7 @@ class Device(BaseModel):
 
 class DeviceCreate(BaseModel):
     inventory_no: str
+    serial_number: str
     device_type_id: int
     location_id: int
     status: str = "in_stock"

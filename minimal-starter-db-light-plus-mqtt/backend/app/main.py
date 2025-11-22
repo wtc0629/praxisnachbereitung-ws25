@@ -124,7 +124,7 @@ async def get_devices():
     """Liste aller Geräte inkl. Typ, Standort, Status"""
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
-            select d.device_id, d.inventory_no, d.status, d.notes,
+            select d.device_id, d.inventory_no, d.serial_number, d.status, d.notes,
                    d.created_at, d.updated_at,
                    dt.code as device_type_code, dt.name as device_type_name,
                    l.code as location_code, l.name as location_name,
@@ -149,25 +149,25 @@ async def get_devices():
 async def create_device(device: DeviceCreate):
     """
     Neues Gerät anlegen.
-    Domain Rule IR-01: Eindeutige Seriennummer (inventory_no)
+    Domain Rule IR-01: Eindeutige Seriennummer (serial_number)
     """
     with get_conn() as conn, conn.cursor() as cur:
-        # Prüfen ob inventory_no bereits existiert
-        cur.execute("select device_id from device where inventory_no = %s", (device.inventory_no,))
+        # Prüfen ob serial_number bereits existiert (IR-01)
+        cur.execute("select device_id from device where serial_number = %s", (device.serial_number,))
         existing = cur.fetchone()
 
         if existing:
             raise HTTPException(
                 status_code=409,
-                detail=f"Device with inventory_no '{device.inventory_no}' already exists"
+                detail=f"Device with serial_number '{device.serial_number}' already exists (IR-01 violated)"
             )
 
         # Device anlegen
         cur.execute("""
-            insert into device (inventory_no, device_type_id, location_id, status, notes)
-            values (%s, %s, %s, %s, %s)
-            returning device_id, inventory_no, device_type_id, location_id, status, notes, created_at, updated_at
-        """, (device.inventory_no, device.device_type_id, device.location_id, device.status, device.notes))
+            insert into device (inventory_no, serial_number, device_type_id, location_id, status, notes)
+            values (%s, %s, %s, %s, %s, %s)
+            returning device_id, inventory_no, serial_number, device_type_id, location_id, status, notes, created_at, updated_at
+        """, (device.inventory_no, device.serial_number, device.device_type_id, device.location_id, device.status, device.notes))
 
         new_device = cur.fetchone()
 
@@ -179,7 +179,7 @@ async def get_device(device_id: int):
     """Einzelnes Gerät abrufen"""
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
-            select d.device_id, d.inventory_no, d.status, d.notes,
+            select d.device_id, d.inventory_no, d.serial_number, d.status, d.notes,
                    d.created_at, d.updated_at,
                    dt.device_type_id, dt.code as device_type_code, dt.name as device_type_name,
                    l.location_id, l.code as location_code, l.name as location_name
