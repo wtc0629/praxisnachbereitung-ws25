@@ -38,6 +38,7 @@
       .success-msg { background: #d1fae5; color: #065f46; padding: .75rem; border-radius: 8px; margin-bottom: 1rem; }
       .error-msg { background: #fee2e2; color: #991b1b; padding: .75rem; border-radius: 8px; margin-bottom: 1rem; }
       .hidden { display: none; }
+      code { background: #f3f4f6; padding: .2rem .4rem; border-radius: 4px; font-size: .85rem; color: #1f2937; }
     </style>
   </head>
   <body>
@@ -59,6 +60,7 @@
           <thead>
             <tr>
               <th>Inventarnummer</th>
+              <th>Seriennummer</th>
               <th>Typ</th>
               <th>Standort</th>
               <th>Status</th>
@@ -67,7 +69,7 @@
             </tr>
           </thead>
           <tbody id="devices-tbody">
-            <tr><td colspan="6">Lade Geräte...</td></tr>
+            <tr><td colspan="7">Lade Geräte...</td></tr>
           </tbody>
         </table>
 
@@ -77,6 +79,10 @@
             <div>
               <label>Inventarnummer*</label>
               <input id="device-inventory-no" required placeholder="INV-2025-009" />
+            </div>
+            <div>
+              <label>Seriennummer*</label>
+              <input id="device-serial-number" required placeholder="SN-XXX-XXX-XXX" />
             </div>
             <div>
               <label>Gerätetyp*</label>
@@ -202,13 +208,14 @@
       function renderDevices() {
         const tbody = document.getElementById('devices-tbody');
         if (devices.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6">Keine Geräte vorhanden</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7">Keine Geräte vorhanden</td></tr>';
           return;
         }
 
         tbody.innerHTML = devices.map(d => `
           <tr>
             <td><strong>${d.inventory_no}</strong></td>
+            <td><code>${d.serial_number}</code></td>
             <td>${d.device_type_name}</td>
             <td>${d.location_name}</td>
             <td><span class="badge ${getStatusBadge(d.status)}">${getStatusText(d.status)}</span></td>
@@ -248,10 +255,13 @@
       }
 
       function populateAssignmentForm() {
-        const availableDevices = devices.filter(d => d.availability_status === 'frei' && d.status === 'in_stock');
+        // Zeige ALLE Geräte, damit IR-02 getestet werden kann
         const deviceSelect = document.getElementById('assignment-device-id');
         deviceSelect.innerHTML = '<option value="">Bitte wählen...</option>' +
-          availableDevices.map(d => `<option value="${d.device_id}">${d.inventory_no} - ${d.device_type_name}</option>`).join('');
+          devices.map(d => {
+            const statusLabel = d.availability_status === 'frei' ? '✓ verfügbar' : '✗ ausgeliehen';
+            return `<option value="${d.device_id}">${d.inventory_no} - ${d.device_type_name} (${statusLabel})</option>`;
+          }).join('');
 
         const personSelect = document.getElementById('assignment-person-id');
         personSelect.innerHTML = '<option value="">Bitte wählen...</option>' +
@@ -290,6 +300,7 @@
         e.preventDefault();
         const data = {
           inventory_no: document.getElementById('device-inventory-no').value,
+          serial_number: document.getElementById('device-serial-number').value,
           device_type_id: parseInt(document.getElementById('device-type-id').value),
           location_id: parseInt(document.getElementById('device-location-id').value),
           status: document.getElementById('device-status').value,
