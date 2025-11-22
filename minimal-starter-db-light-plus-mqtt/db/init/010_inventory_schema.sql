@@ -30,6 +30,7 @@ create table if not exists person (
 create table if not exists device (
   device_id serial primary key,
   inventory_no text not null unique,
+  serial_number text not null unique,  -- IR-01: Eindeutige Seriennummer
   device_type_id int not null references device_type(device_type_id) on delete restrict,
   location_id int not null references location(location_id) on delete restrict,
   status text not null check (status in ('in_use','in_stock','repair','retired')) default 'in_stock',
@@ -78,18 +79,18 @@ insert into person (personnel_no, name, email) values
 on conflict (personnel_no) do nothing;
 
 -- Seed-Daten für Device
-insert into device (inventory_no, device_type_id, location_id, status, notes)
-select d.inventory_no, dt.device_type_id, l.location_id, d.status, d.notes
+insert into device (inventory_no, serial_number, device_type_id, location_id, status, notes)
+select d.inventory_no, d.serial_number, dt.device_type_id, l.location_id, d.status, d.notes
 from (values
-  ('INV-2025-001', 'LAPTOP', 'HQ', 'in_stock', 'Dell Latitude 5520'),
-  ('INV-2025-002', 'LAPTOP', 'REMOTE', 'in_use', 'Lenovo ThinkPad X1'),
-  ('INV-2025-003', 'MONITOR', 'HQ', 'in_stock', 'Dell 27" 4K'),
-  ('INV-2025-004', 'MONITOR', 'LAB', 'in_use', 'Samsung 24"'),
-  ('INV-2025-005', 'SCANNER', 'WAREHOUSE', 'in_stock', 'Zebra TC21'),
-  ('INV-2025-006', 'SCANNER', 'WAREHOUSE', 'repair', 'Zebra TC21 - defekt'),
-  ('INV-2025-007', 'TABLET', 'REMOTE', 'in_use', 'iPad Air'),
-  ('INV-2025-008', 'PRINTER', 'HQ', 'retired', 'HP LaserJet - alt')
-) as d(inventory_no, device_type_code, location_code, status, notes)
+  ('INV-2025-001', 'SN-DELL-LAT-5520-001', 'LAPTOP', 'HQ', 'in_stock', 'Dell Latitude 5520'),
+  ('INV-2025-002', 'SN-LENO-X1-2023-042', 'LAPTOP', 'REMOTE', 'in_use', 'Lenovo ThinkPad X1'),
+  ('INV-2025-003', 'SN-DELL-MON-27-4K-003', 'MONITOR', 'HQ', 'in_stock', 'Dell 27" 4K'),
+  ('INV-2025-004', 'SN-SAMS-24-2024-004', 'MONITOR', 'LAB', 'in_use', 'Samsung 24"'),
+  ('INV-2025-005', 'SN-ZEBR-TC21-005', 'SCANNER', 'WAREHOUSE', 'in_stock', 'Zebra TC21'),
+  ('INV-2025-006', 'SN-ZEBR-TC21-006', 'SCANNER', 'WAREHOUSE', 'repair', 'Zebra TC21 - defekt'),
+  ('INV-2025-007', 'SN-APPL-IPAD-AIR-007', 'TABLET', 'REMOTE', 'in_use', 'iPad Air'),
+  ('INV-2025-008', 'SN-HP-LJ-1998-008', 'PRINTER', 'HQ', 'retired', 'HP LaserJet - alt')
+) as d(inventory_no, serial_number, device_type_code, location_code, status, notes)
 join device_type dt on dt.code = d.device_type_code
 join location l on l.code = d.location_code
 on conflict (inventory_no) do nothing;
