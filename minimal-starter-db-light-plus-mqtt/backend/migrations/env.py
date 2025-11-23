@@ -28,7 +28,7 @@ target_metadata = None
 
 # Override sqlalchemy.url with environment variables
 def get_url():
-    return "postgresql://{user}:{password}@{host}:{port}/{db}".format(
+    return "postgresql+psycopg://{user}:{password}@{host}:{port}/{db}".format(
         user=os.getenv("POSTGRES_USER", "postgres"),
         password=os.getenv("POSTGRES_PASSWORD", "postgres"),
         host=os.getenv("POSTGRES_HOST", "db"),
