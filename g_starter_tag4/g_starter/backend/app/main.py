@@ -52,7 +52,7 @@ def edit_student_page(request: Request, student_id: int):
 
   return templates.TemplateResponse(
     "students/edit.html",
-    {"request": request, "title": "Student bearbeiten", "student": student},
+    {"request": request, "title": "Studierende bearbeiten", "student": student},
   )
 
 

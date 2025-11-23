@@ -8,7 +8,13 @@ services:
       POSTGRES_USER: appuser
       POSTGRES_PASSWORD: apppass
     volumes:
-      - ./db/init:/docker-entrypoint-initdb.d
+      # Named Volumes can be used to persist data between container restarts.
+      # - pgdata:/var/lib/postgresql/data
+
+      # Bind mount for local development (uncomment for local development).
+      # - ./db/data:/var/lib/postgresql/data
+
+      - ./db/init:/docker-entrypoint-initdb.d      
     ports:
       - "5432:5432"
 
