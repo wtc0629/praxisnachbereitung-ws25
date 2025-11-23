@@ -3,7 +3,9 @@ import io
 import os
 import json
 from datetime import datetime
+from io import BytesIO
 
+import pandas as pd
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, Request, Response, Query, HTTPException, Form
 from fastapi.templating import Jinja2Templates
@@ -471,3 +473,91 @@ async def create_location(location: LocationCreate):
             )
 
     return new_location
+
+
+# ==========================================
+# EXPORT ENDPOINTS (Tag 4)
+# ==========================================
+
+@app.get("/assignments.csv")
+async def assignments_csv():
+    """Export all assignments as CSV with joined data from all related tables"""
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+            SELECT
+                a.assignment_id,
+                d.inventory_no as inventory_number,
+                d.serial_number,
+                dt.name as device_type,
+                l.name as location_name,
+                p.name as person_name,
+                p.email as person_email,
+                a.assigned_from as date_from,
+                a.assigned_to as date_to,
+                a.damage_notes
+            FROM assignment a
+            JOIN device d ON d.device_id = a.device_id
+            JOIN device_type dt ON dt.device_type_id = d.device_type_id
+            JOIN location l ON l.location_id = d.location_id
+            JOIN person p ON p.person_id = a.person_id
+            ORDER BY a.assigned_from DESC
+        """)
+        rows = cur.fetchall()
+
+    # Create CSV
+    buf = io.StringIO()
+    fieldnames = [
+        "assignment_id", "inventory_number", "serial_number",
+        "device_type", "location_name", "person_name", "person_email",
+        "date_from", "date_to", "damage_notes"
+    ]
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, delimiter=";", lineterminator="\n")
+    writer.writeheader()
+    for r in rows:
+        writer.writerow(r)
+
+    data = buf.getvalue().encode("utf-8-sig")
+    headers = {"Content-Disposition": 'attachment; filename="assignments.csv"'}
+    return Response(content=data, media_type="text/csv; charset=utf-8", headers=headers)
+
+
+@app.get("/assignments.xlsx")
+async def assignments_xlsx():
+    """Export all assignments as Excel file with joined data from all related tables"""
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+            SELECT
+                a.assignment_id,
+                d.inventory_no as inventory_number,
+                d.serial_number,
+                dt.name as device_type,
+                l.name as location_name,
+                p.name as person_name,
+                p.email as person_email,
+                a.assigned_from as date_from,
+                a.assigned_to as date_to,
+                a.damage_notes
+            FROM assignment a
+            JOIN device d ON d.device_id = a.device_id
+            JOIN device_type dt ON dt.device_type_id = d.device_type_id
+            JOIN location l ON l.location_id = d.location_id
+            JOIN person p ON p.person_id = a.person_id
+            ORDER BY a.assigned_from DESC
+        """)
+        rows = cur.fetchall()
+
+    # Convert to DataFrame
+    df = pd.DataFrame(rows)
+
+    # Write to Excel
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Assignments', index=False)
+
+    data = buf.getvalue()
+    headers = {"Content-Disposition": 'attachment; filename="assignments.xlsx"'}
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers=headers
+    )
