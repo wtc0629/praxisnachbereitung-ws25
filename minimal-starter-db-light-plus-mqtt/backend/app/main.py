@@ -363,10 +363,10 @@ async def return_assignment(assignment_id: int, return_data: AssignmentReturn):
         # Rückgabe setzen
         cur.execute("""
             update assignment
-            set assigned_to = %s
+            set assigned_to = %s, damage_notes = %s
             where assignment_id = %s
-            returning assignment_id, device_id, person_id, assigned_from, assigned_to, notes
-        """, (assigned_to, assignment_id))
+            returning assignment_id, device_id, person_id, assigned_from, assigned_to, notes, damage_notes
+        """, (assigned_to, return_data.damage_notes, assignment_id))
 
         updated_assignment = cur.fetchone()
 
