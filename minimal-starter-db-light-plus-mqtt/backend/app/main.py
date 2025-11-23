@@ -4,6 +4,7 @@ import os
 import json
 from datetime import datetime
 
+import pandas as pd
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, Request, Response, Query, HTTPException, Form
 from fastapi.templating import Jinja2Templates
@@ -363,10 +364,10 @@ async def return_assignment(assignment_id: int, return_data: AssignmentReturn):
         # Rückgabe setzen
         cur.execute("""
             update assignment
-            set assigned_to = %s
+            set assigned_to = %s, damage_notes = %s
             where assignment_id = %s
-            returning assignment_id, device_id, person_id, assigned_from, assigned_to, notes
-        """, (assigned_to, assignment_id))
+            returning assignment_id, device_id, person_id, assigned_from, assigned_to, notes, damage_notes
+        """, (assigned_to, return_data.damage_notes, assignment_id))
 
         updated_assignment = cur.fetchone()
 
@@ -379,6 +380,116 @@ async def return_assignment(assignment_id: int, return_data: AssignmentReturn):
         })
 
     return updated_assignment
+
+
+@app.get("/assignments.csv")
+async def assignments_csv():
+    """
+    CSV-Export aller Assignments mit JOIN über device, device_type, location und person.
+
+    Spalten (gemäß Übung 4):
+    - assignment_id
+    - inventory_no
+    - serial_number (falls vorhanden, hier als inventory_no verwendet)
+    - device_type (Name des Gerätetyps)
+    - location_name (Standort)
+    - person_name (Name der Person)
+    - person_email (E-Mail der Person)
+    - assigned_from (Ausgabedatum)
+    - assigned_to (Rückgabedatum, NULL = aktiv)
+    - damage_notes (Schadensnotizen bei Rückgabe)
+    """
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+            select
+                a.assignment_id,
+                d.inventory_no,
+                d.inventory_no as serial_number,
+                dt.name as device_type,
+                l.name as location_name,
+                p.name as person_name,
+                p.email as person_email,
+                a.assigned_from,
+                a.assigned_to,
+                a.notes,
+                a.damage_notes
+            from assignment a
+            join device d on d.device_id = a.device_id
+            join device_type dt on dt.device_type_id = d.device_type_id
+            join location l on l.location_id = d.location_id
+            join person p on p.person_id = a.person_id
+            order by a.assigned_from desc
+        """)
+        rows = list(cur.fetchall())
+
+    buf = io.StringIO()
+    fieldnames = [
+        "assignment_id",
+        "inventory_no",
+        "serial_number",
+        "device_type",
+        "location_name",
+        "person_name",
+        "person_email",
+        "assigned_from",
+        "assigned_to",
+        "notes",
+        "damage_notes",
+    ]
+    writer = csv.DictWriter(buf, fieldnames=fieldnames, delimiter=";", lineterminator="\n")
+    writer.writeheader()
+    for r in rows:
+        writer.writerow(r)
+
+    data = buf.getvalue().encode("utf-8-sig")
+    headers = {"Content-Disposition": 'attachment; filename="assignments.csv"'}
+    return Response(content=data, media_type="text/csv; charset=utf-8", headers=headers)
+
+
+@app.get("/assignments.xlsx")
+async def assignments_xlsx():
+    """
+    XLSX-Export aller Assignments mit JOIN über device, device_type, location und person.
+
+    Verwendet Pandas und openpyxl für bessere Excel-Kompatibilität.
+    """
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+            select
+                a.assignment_id,
+                d.inventory_no,
+                d.inventory_no as serial_number,
+                dt.name as device_type,
+                l.name as location_name,
+                p.name as person_name,
+                p.email as person_email,
+                a.assigned_from,
+                a.assigned_to,
+                a.notes,
+                a.damage_notes
+            from assignment a
+            join device d on d.device_id = a.device_id
+            join device_type dt on dt.device_type_id = d.device_type_id
+            join location l on l.location_id = d.location_id
+            join person p on p.person_id = a.person_id
+            order by a.assigned_from desc
+        """)
+        rows = list(cur.fetchall())
+
+    # Convert to DataFrame
+    df = pd.DataFrame(rows)
+
+    # Excel-Export mit openpyxl
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Assignments', index=False)
+
+    buf.seek(0)
+    headers = {
+        "Content-Disposition": 'attachment; filename="assignments.xlsx"',
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    }
+    return Response(content=buf.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers=headers)
 
 
 # --- Helper Endpoints (Persons, DeviceTypes, Locations) ---

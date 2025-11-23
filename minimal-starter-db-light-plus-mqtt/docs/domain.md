@@ -47,6 +47,7 @@ erDiagram
         datetime assigned_from
         datetime assigned_to "NULL = aktiv"
         string notes
+        string damage_notes "Schadensnotizen bei Rückgabe"
     }
 ```
 

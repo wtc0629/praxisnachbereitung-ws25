@@ -81,6 +81,7 @@ class Assignment(BaseModel):
     assigned_from: datetime
     assigned_to: Optional[datetime] = None
     notes: Optional[str] = None
+    damage_notes: Optional[str] = None
 
 
 class AssignmentCreate(BaseModel):
@@ -92,3 +93,4 @@ class AssignmentCreate(BaseModel):
 
 class AssignmentReturn(BaseModel):
     assigned_to: Optional[datetime] = None
+    damage_notes: Optional[str] = None

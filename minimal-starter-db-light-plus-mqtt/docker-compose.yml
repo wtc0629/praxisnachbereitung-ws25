@@ -35,8 +35,14 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DB_DSN=postgresql://appuser:apppass@db:5432/appdb
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=appdb
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppass
       - MQTT_HOST=mqtt
       - MQTT_PORT=1883
     volumes:
       - ./backend:/app/backend:rw
+      - ./alembic.ini:/app/alembic.ini:ro
       - ./.env:/app/.env:ro
